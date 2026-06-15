@@ -74,9 +74,9 @@ def format_time(value: object) -> str:
 def render_sidebar_nav() -> None:
     """渲染显式导航标签，避免使用 Streamlit 默认文件名。"""
     with st.sidebar:
-        st.page_link("app.py", label="首页", icon="🏠")
-        st.page_link("pages/2_📊_细分图表分析.py", label="细分图表分析", icon="📊")
-        st.page_link("pages/3_📋_原始数据.py", label="原始数据", icon="📋")
+        st.page_link("app.py", label="首页")
+        st.page_link("pages/2_📊_细分图表分析.py", label="细分图表分析")
+        st.page_link("pages/3_📋_原始数据.py", label="原始数据")
         st.divider()
 
 
@@ -184,7 +184,6 @@ def data_mode_label(value: object) -> str:
 def main() -> None:
     st.set_page_config(
         page_title="AgentPulse - AI Agent 开源生态大屏",
-        page_icon="♛",
         layout="wide",
         initial_sidebar_state="expanded",
     )
@@ -213,7 +212,7 @@ def main() -> None:
     st.markdown(
         """
         <div class="hero">
-          <h1>🏠 首页 - AgentPulse 智能体开源生态大屏</h1>
+          <h1>首页 - AgentPulse 智能体开源生态大屏</h1>
           <a class="repo-link" href="https://github.com/onlynor/agent_pulse" target="_blank" rel="noopener noreferrer" aria-label="GitHub 仓库" title="GitHub 仓库">
             <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
               <path d="M12 0.5C5.65 0.5 0.5 5.65 0.5 12c0 5.08 3.29 9.39 7.86 10.91 0.58 0.1 0.79-0.25 0.79-0.56 0-0.28-0.01-1.02-0.02-2-3.2 0.7-3.88-1.54-3.88-1.54-0.52-1.33-1.28-1.68-1.28-1.68-1.05-0.72 0.08-0.7 0.08-0.7 1.16 0.08 1.77 1.19 1.77 1.19 1.03 1.76 2.7 1.25 3.36 0.96 0.1-0.75 0.4-1.25 0.73-1.54-2.55-0.29-5.23-1.28-5.23-5.68 0-1.25 0.45-2.28 1.18-3.08-0.12-0.29-0.51-1.46 0.11-3.04 0 0 0.97-0.31 3.16 1.18 0.92-0.26 1.9-0.38 2.88-0.39 0.98 0 1.96 0.13 2.88 0.39 2.2-1.49 3.16-1.18 3.16-1.18 0.62 1.58 0.23 2.75 0.11 3.04 0.74 0.8 1.18 1.83 1.18 3.08 0 4.42-2.69 5.39-5.25 5.67 0.41 0.36 0.78 1.06 0.78 2.14 0 1.54-0.01 2.79-0.01 3.17 0 0.31 0.21 0.67 0.79 0.56A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35 0.5 12 0.5Z"/>

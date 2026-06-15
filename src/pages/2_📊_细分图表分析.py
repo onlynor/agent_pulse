@@ -3,7 +3,6 @@ import streamlit as st
 
 st.set_page_config(
     page_title="细分图表分析 - AgentPulse",
-    page_icon="♛",
     layout="wide",
 )
 

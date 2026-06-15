@@ -4,7 +4,6 @@ import streamlit as st
 # 必须第一个调用
 st.set_page_config(
     page_title="原始数据 - AgentPulse",
-    page_icon="♛",
     layout="wide",
 )
 
