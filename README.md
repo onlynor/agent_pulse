@@ -4,6 +4,8 @@ AgentPulse 是一个 AI Agent 开源生态分析面板，用来观察热门 Agen
 
 它内置了一份可直接运行的本地数据集，不需要 GitHub Token 也能打开页面查看分析结果。
 
+在线访问：https://visboard.streamlit.app/
+
 ## 你可以看到什么
 
 - AI Agent 开源项目整体规模和热度
