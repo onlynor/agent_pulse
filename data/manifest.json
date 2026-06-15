@@ -1,0 +1,9 @@
+{
+  "version": "v2",
+  "schema_version": "2.0",
+  "last_updated_at": "2026-06-15T13:45:49Z",
+  "active_source": "本地缓存数据",
+  "repo_count": 300,
+  "data_mode": "cache",
+  "cache_ttl_hours": 24
+}

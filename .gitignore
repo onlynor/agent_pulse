@@ -1,0 +1,36 @@
+# 本地密钥
+.env
+
+# Python 虚拟环境和缓存
+.venv/
+__pycache__/
+*.py[cod]
+uv.lock
+
+# Streamlit 配置
+.streamlit/*
+!.streamlit/
+!.streamlit/config.toml
+
+# 运行产物和用户临时数据
+output/
+ouput/
+data/derived/
+data/snapshots/
+data/legacy/
+tests/
+
+# 本地文档和迭代记录
+*.doc
+*.docx
+*.pdf
+docs/
+skills/prompt/
+skills/tasks/
+skills/self_improve/
+CLAUDE.md
+
+# 兼容旧文档目录，避免迁移残留误入 git
+/prompt/
+/tasks/
+/self_improve/
