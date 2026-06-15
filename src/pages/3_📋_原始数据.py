@@ -11,7 +11,7 @@ st.set_page_config(
 import sys
 from pathlib import Path
 
-# 添加 src 到路径
+    # 添加源码目录到导入路径
 src_path = Path(__file__).parent.parent
 sys.path.insert(0, str(src_path))
 
@@ -118,7 +118,7 @@ def main():
                 st.markdown(f"- 开放问题: {repo['open_issues_count']:,}")
                 st.markdown(f"- 观察者: {repo.get('watchers_count', 0):,}")
 
-            # Topics 标签
+            # 主题标签
             if repo.get("topics"):
                 topics = repo["topics"]
                 if isinstance(topics, str):

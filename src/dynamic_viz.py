@@ -1,6 +1,6 @@
-"""Dynamic visualization components for AgentPulse dashboard.
+"""AgentPulse 仪表盘的动态可视化组件。
 
-Provides animated charts and dynamic effects for the main interface.
+提供主界面所需的动画图表和动态效果。
 """
 from __future__ import annotations
 
@@ -19,11 +19,11 @@ except ImportError:
 def _generate_animation_data(df_hash: str, top_n: int = 6) -> dict:
     """生成动画数据并缓存，避免重复计算.
 
-    Args:
+    参数：
         df_hash: DataFrame 的哈希值（用于缓存键）
         top_n: 显示的仓库数量
 
-    Returns:
+    返回：
         包含动画数据的字典
     """
     # 这个函数会在首次调用时执行，后续从缓存读取
@@ -31,14 +31,14 @@ def _generate_animation_data(df_hash: str, top_n: int = 6) -> dict:
 
 
 def select_trending_repos(df: pd.DataFrame, top_n: int = 6) -> pd.DataFrame:
-    """Select repositories with significant star growth.
+    """选择星标增长较明显的仓库。
 
-    Args:
-        df: DataFrame with repository data
-        top_n: Number of top repos to select
+    参数：
+        df: 仓库数据 DataFrame
+        top_n: 选择的仓库数量
 
-    Returns:
-        DataFrame with top trending repos sorted by stars_per_day
+    返回：
+        按 stars_per_day 排序后的高增长仓库 DataFrame
     """
     if df.empty or "stars_per_day" not in df.columns:
         return df.head(top_n)
@@ -64,15 +64,15 @@ def generate_historical_stars(
     stars_per_day: float,
     months: int = 12
 ) -> list[int]:
-    """Generate simulated historical star data.
+    """生成模拟历史星标数据。
 
-    Args:
-        current_stars: Current star count
-        stars_per_day: Daily star growth rate
-        months: Number of months to simulate (default 12 for more variation)
+    参数：
+        current_stars: 当前星标数
+        stars_per_day: 每日星标增长率
+        months: 模拟月份数
 
-    Returns:
-        List of star counts over time (oldest to newest)
+    返回：
+        从旧到新的星标数量列表
     """
     history = []
     days_total = months * 30  # 每月按 30 天计算
@@ -99,14 +99,14 @@ def generate_historical_stars(
 
 
 def create_animated_star_trend(df: pd.DataFrame, top_n: int = 6) -> go.Figure:
-    """Create animated line chart showing star growth trends.
+    """创建展示星标增长趋势的动画折线图。
 
-    Args:
-        df: DataFrame with repository data
-        top_n: Number of repos to display
+    参数：
+        df: 仓库数据 DataFrame
+        top_n: 展示的仓库数量
 
-    Returns:
-        Plotly Figure with animation
+    返回：
+        带动画帧的 Plotly Figure
     """
     if df.empty:
         fig = go.Figure()

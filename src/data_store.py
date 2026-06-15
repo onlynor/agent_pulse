@@ -150,31 +150,21 @@ def load_legacy_seed_records() -> list[dict[str, Any]]:
 def save_raw_repo_records(records: list[dict[str, Any]]) -> None:
     ensure_data_directories()
 
-    # Save to CSV (primary storage)
+    # 保存到 CSV（主存储）
     save_repos_to_csv(records)
-
-    # Also save individual JSON files for backward compatibility (optional)
-    # Uncomment if you want to keep JSON files:
-    # seen: set[str] = set()
-    # for record in records:
-    #     full_name = str(record.get("full_name", "")).strip()
-    #     if not full_name or full_name in seen:
-    #         continue
-    #     seen.add(full_name)
-    #     write_json(RAW_REPOS_DIR / repo_file_name(full_name), record)
 
 
 def load_raw_repo_records() -> list[dict[str, Any]]:
     ensure_data_directories()
 
-    # Try loading from CSV first (preferred method)
+    # 优先从 CSV 加载
     if RAW_REPOS_CSV.exists():
         records = load_repos_from_csv()
         if records:
             write_log("info", "loaded_from_csv", f"{len(records)} records")
             return records
 
-    # Fallback to optional legacy JSON files if CSV doesn't exist.
+    # CSV 不存在时，回退到可选的旧 JSON 文件
     write_log("info", "fallback_to_json", "CSV not found, loading from legacy JSON files")
     records: list[dict[str, Any]] = []
     for path in sorted(RAW_REPOS_DIR.glob("*.json")):
@@ -182,7 +172,7 @@ def load_raw_repo_records() -> list[dict[str, Any]]:
         if isinstance(record, dict) and record.get("full_name"):
             records.append(record)
 
-    # If we loaded from JSON, save to CSV for next time
+    # 如果从 JSON 加载成功，则保存为 CSV 方便下次读取
     if records:
         save_repos_to_csv(records)
         write_log("info", "auto_migrate_csv", f"saved {len(records)} records to CSV")

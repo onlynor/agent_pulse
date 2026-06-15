@@ -60,189 +60,8 @@ def load_dependencies() -> dict[str, object] | None:
 
 
 def apply_page_style() -> None:
-    st.markdown(
-        """
-        <style>
-        /* ========== 隐藏右上角 Streamlit 菜单和图标 ========== */
-        #MainMenu,
-        footer,
-        [data-testid="stToolbar"],
-        [data-testid="stDecoration"],
-        div[data-testid="stStatusWidget"],
-        .stDeployButton,
-        button[data-testid="stBaseButton-headerNoPadding"],
-        button[data-testid="stBaseButton-header"] {
-            display: none !important;
-            visibility: hidden !important;
-        }
-        header[data-testid="stHeader"] {
-            background: transparent !important;
-            pointer-events: none !important;
-        }
-        header[data-testid="stHeader"] * {
-            display: none !important;
-            visibility: hidden !important;
-        }
-        /* 隐藏 Streamlit 内置的运行按钮 */
-        section[data-testid="stSidebar"] button[kind="icon"] {display: none !important;}
-
-        /* ========== 自定义导航链接 ========== */
-        [data-testid="stSidebar"] [data-testid="stPageLink"] a {
-            border: 1px solid rgba(34, 211, 238, 0.20);
-            border-radius: 8px;
-            color: #e0f2fe !important;
-            background: rgba(15, 23, 42, 0.54);
-            font-weight: 700;
-            margin-bottom: 0.35rem;
-            transition: all 0.2s ease;
-        }
-        [data-testid="stSidebar"] [data-testid="stPageLink"] a:hover {
-            border-color: rgba(34, 211, 238, 0.52);
-            color: #22d3ee !important;
-            background: linear-gradient(135deg, rgba(14, 165, 233, 0.30), rgba(15, 23, 42, 0.92));
-            box-shadow: 0 5px 16px rgba(34, 211, 238, 0.16);
-            transform: translateY(-1px);
-        }
-        [data-testid="stSidebar"] [data-testid="stPageLink"] a:active {
-            transform: translateY(0) scale(0.98);
-            box-shadow: 0 2px 8px rgba(34, 211, 238, 0.12);
-        }
-
-        /* ========== 全局页面样式 ========== */
-        html, body, [data-testid="stAppViewContainer"] {
-            background:
-                radial-gradient(circle at top left, rgba(34, 211, 238, 0.16), transparent 26rem),
-                linear-gradient(135deg, #020617 0%, #08122d 52%, #020617 100%);
-        }
-        .block-container {
-            padding-top: 0.85rem;
-            padding-bottom: 1.6rem;
-            max-width: 1520px;
-        }
-        [data-testid="stSidebar"] {
-            background: linear-gradient(180deg, #03121d 0%, #071827 50%, #020617 100%);
-            border-right: 1px solid rgba(125, 211, 252, 0.34);
-        }
-        [data-testid="stSidebar"] h2,
-        [data-testid="stSidebar"] h3,
-        [data-testid="stSidebar"] label,
-        [data-testid="stSidebar"] p,
-        [data-testid="stSidebar"] span {
-            color: #f8fbff;
-        }
-        [data-testid="stSidebar"] section {
-            padding-top: 0.6rem;
-        }
-        [data-testid="stSidebar"] hr {
-            margin: 0.75rem 0;
-            border-color: rgba(125, 211, 252, 0.22);
-        }
-        [data-testid="stSidebar"] input {
-            color: #f8fbff;
-            background: rgba(15, 23, 42, 0.96);
-        }
-        [data-testid="stSidebar"] input::placeholder {
-            color: #bae6fd;
-            opacity: 0.78;
-        }
-        [data-testid="stSidebar"] [data-baseweb="select"] > div,
-        [data-testid="stSidebar"] [data-baseweb="input"] > div {
-            background: rgba(15, 23, 42, 0.96);
-            border-color: rgba(125, 211, 252, 0.46);
-        }
-        [data-testid="stSidebar"] .stButton > button {
-            color: #f8fbff;
-            border: 1px solid rgba(125, 211, 252, 0.68);
-            background: linear-gradient(135deg, #0369a1 0%, #0e7490 100%);
-            font-weight: 700;
-            transition: all 0.2s ease;
-        }
-        [data-testid="stSidebar"] .stButton > button:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(34, 211, 238, 0.2);
-        }
-        [data-testid="stSidebar"] .stButton > button:active {
-            transform: translateY(0);
-        }
-
-        /* ========== Hero 区域 ========== */
-        .hero {
-            border: 1px solid rgba(34, 211, 238, 0.24);
-            border-radius: 8px;
-            padding: 14px 18px;
-            background: linear-gradient(135deg, rgba(14, 165, 233, 0.16), rgba(15, 23, 42, 0.70));
-            margin-bottom: 10px;
-        }
-        .hero h1 {
-            margin: 0;
-            font-size: 1.85rem;
-            letter-spacing: 0;
-            color: #e0f2fe;
-        }
-
-        /* ========== KPI 卡片 ========== */
-        .kpi-card, .insight-card {
-            border: 1px solid rgba(34, 211, 238, 0.20);
-            border-radius: 8px;
-            background: rgba(8, 18, 45, 0.86);
-            padding: 13px 14px;
-            min-height: 88px;
-            transition: all 0.25s ease;
-        }
-        .kpi-card:hover {
-            border-color: rgba(34, 211, 238, 0.40);
-            box-shadow: 0 4px 16px rgba(34, 211, 238, 0.12);
-            transform: translateY(-2px);
-        }
-        .kpi-label {
-            color: #bfdbfe;
-            font-size: 0.82rem;
-            margin-bottom: 7px;
-        }
-        .kpi-value {
-            color: #e0f2fe;
-            font-size: 1.45rem;
-            font-weight: 800;
-            line-height: 1.1;
-        }
-        .kpi-note {
-            color: #38bdf8;
-            font-size: 0.76rem;
-            margin-top: 7px;
-        }
-
-        /* ========== Section 标题 ========== */
-        .section-title {
-            font-size: 1.02rem;
-            font-weight: 700;
-            color: #e0f2fe;
-            margin: 0.45rem 0 0.55rem;
-        }
-
-        /* ========== Insight 卡片 ========== */
-        .insight-card ul {
-            margin: 0;
-            padding-left: 1.1rem;
-        }
-        .insight-card li {
-            color: #dbeafe;
-            margin-bottom: 0.55rem;
-            line-height: 1.45;
-        }
-        .insight-card:hover {
-            border-color: rgba(34, 211, 238, 0.40);
-            box-shadow: 0 4px 16px rgba(34, 211, 238, 0.12);
-        }
-
-        /* ========== DataFrame ========== */
-        [data-testid="stDataFrame"] {
-            border: 1px solid rgba(34, 211, 238, 0.18);
-            border-radius: 8px;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
+    css = (SRC_DIR / "styles.css").read_text(encoding="utf-8")
+    st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
 
 
 def format_time(value: object) -> str:
@@ -253,12 +72,11 @@ def format_time(value: object) -> str:
 
 
 def render_sidebar_nav() -> None:
-    """Render explicit navigation labels instead of Streamlit's default file names."""
+    """渲染显式导航标签，避免使用 Streamlit 默认文件名。"""
     with st.sidebar:
         st.page_link("app.py", label="首页", icon="🏠")
         st.page_link("pages/2_📊_细分图表分析.py", label="细分图表分析", icon="📊")
         st.page_link("pages/3_📋_原始数据.py", label="原始数据", icon="📋")
-        st.link_button("GitHub: onlynor", "https://github.com/onlynor", use_container_width=True)
         st.divider()
 
 
@@ -396,6 +214,11 @@ def main() -> None:
         """
         <div class="hero">
           <h1>🏠 首页 - AgentPulse 智能体开源生态大屏</h1>
+          <a class="repo-link" href="https://github.com/onlynor/agent_pulse" target="_blank" rel="noopener noreferrer" aria-label="GitHub 仓库" title="GitHub 仓库">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M12 0.5C5.65 0.5 0.5 5.65 0.5 12c0 5.08 3.29 9.39 7.86 10.91 0.58 0.1 0.79-0.25 0.79-0.56 0-0.28-0.01-1.02-0.02-2-3.2 0.7-3.88-1.54-3.88-1.54-0.52-1.33-1.28-1.68-1.28-1.68-1.05-0.72 0.08-0.7 0.08-0.7 1.16 0.08 1.77 1.19 1.77 1.19 1.03 1.76 2.7 1.25 3.36 0.96 0.1-0.75 0.4-1.25 0.73-1.54-2.55-0.29-5.23-1.28-5.23-5.68 0-1.25 0.45-2.28 1.18-3.08-0.12-0.29-0.51-1.46 0.11-3.04 0 0 0.97-0.31 3.16 1.18 0.92-0.26 1.9-0.38 2.88-0.39 0.98 0 1.96 0.13 2.88 0.39 2.2-1.49 3.16-1.18 3.16-1.18 0.62 1.58 0.23 2.75 0.11 3.04 0.74 0.8 1.18 1.83 1.18 3.08 0 4.42-2.69 5.39-5.25 5.67 0.41 0.36 0.78 1.06 0.78 2.14 0 1.54-0.01 2.79-0.01 3.17 0 0.31 0.21 0.67 0.79 0.56A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35 0.5 12 0.5Z"/>
+            </svg>
+          </a>
         </div>
         """,
         unsafe_allow_html=True,
@@ -414,7 +237,6 @@ def main() -> None:
         st.header("数据状态")
         st.caption(f"数据模式：{data_mode_label(manifest.get('data_mode', 'cache'))}")
         st.caption(f"仓库数量：{manifest.get('repo_count', 0)}")
-        st.caption(f"最近更新时间：{format_time(manifest.get('last_updated_at', '')) or '暂无'}")
 
     if update_clicked:
         with st.spinner("正在更新当前数据源..."):

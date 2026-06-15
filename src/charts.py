@@ -29,8 +29,8 @@ def _apply_layout(fig: go.Figure, height: int) -> go.Figure:
     fig.update_layout(
         template=CHART_TEMPLATE,
         height=height,
-        margin=dict(l=18, r=18, t=10, b=22),  # 移除标题后，顶部边距减小到 10
-        title=None,  # 不显示内部标题
+            margin=dict(l=18, r=18, t=10, b=22),  # 移除标题后，顶部边距减小到 10
+            title=None,  # 不显示内部标题
         font=dict(family="Microsoft YaHei, Arial, sans-serif", size=13, color=TEXT),
         paper_bgcolor=PANEL_BG,
         plot_bgcolor="rgba(2, 6, 23, 0)",
@@ -139,7 +139,7 @@ def language_distribution(df: pd.DataFrame) -> go.Figure:
 
     # 改用水平条形图，避免饼图标签重叠问题
     fig = px.bar(
-        chart_df.head(10),  # 只显示 Top 10
+        chart_df.head(10),  # 只显示前 10 项
         x="repositories",
         y="language",
         orientation="h",

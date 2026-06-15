@@ -1,11 +1,11 @@
-"""CSV-based data storage for repository cache.
+"""基于 CSV 的仓库缓存存储。
 
-This module provides CSV read/write operations as an alternative to individual JSON files.
-Benefits:
-- Single file instead of 321 JSON files
-- Faster bulk read/write operations
-- Easier version control and diffing
-- Smaller disk footprint (no repeated keys)
+本模块提供 CSV 读写能力，用单一文件替代分散的 JSON 文件。
+优点：
+- 单文件存储，避免大量 JSON 文件
+- 批量读写更快
+- 更便于版本管理和 diff
+- 磁盘占用更小，避免重复字段名
 """
 from __future__ import annotations
 
@@ -21,11 +21,11 @@ except ImportError:
     from config import RAW_DIR, write_log
 
 
-# CSV file paths. RAW_DIR is kept as a compatibility alias for data/cache.
+# CSV 文件路径。RAW_DIR 保留为 data/cache 的兼容别名。
 RAW_REPOS_CSV = RAW_DIR / "repositories.csv"
 BACKUP_REPOS_CSV = RAW_DIR / "repositories_backup.csv"
 
-# Core fields from GitHub API that we preserve in CSV
+# 写入 CSV 的 GitHub 核心字段
 CSV_FIELDS = [
     "id",
     "full_name",
@@ -53,7 +53,7 @@ CSV_FIELDS = [
 
 
 def _extract_owner(record: dict[str, Any]) -> str:
-    """Extract owner login from GitHub API response."""
+    """从 GitHub API 响应中提取 owner login。"""
     owner = record.get("owner", {})
     if isinstance(owner, dict):
         return str(owner.get("login", ""))
@@ -61,7 +61,7 @@ def _extract_owner(record: dict[str, Any]) -> str:
 
 
 def _extract_license(record: dict[str, Any]) -> str:
-    """Extract license SPDX ID from GitHub API response."""
+    """从 GitHub API 响应中提取许可证 SPDX ID。"""
     license_info = record.get("license")
     if isinstance(license_info, dict):
         return str(license_info.get("spdx_id") or license_info.get("key") or "")
@@ -69,7 +69,7 @@ def _extract_license(record: dict[str, Any]) -> str:
 
 
 def _extract_topics(record: dict[str, Any]) -> str:
-    """Convert topics list to comma-separated string."""
+    """将 topics 列表转换为逗号分隔字符串。"""
     topics = record.get("topics", [])
     if isinstance(topics, list):
         return ", ".join(str(t) for t in topics if t)
@@ -77,7 +77,7 @@ def _extract_topics(record: dict[str, Any]) -> str:
 
 
 def records_to_csv_rows(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Convert GitHub API records to CSV-friendly flat rows."""
+    """将 GitHub API 记录转换为适合 CSV 的扁平行。"""
     rows = []
     for record in records:
         row = {
@@ -109,18 +109,18 @@ def records_to_csv_rows(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def csv_rows_to_records(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Convert CSV rows back to GitHub API-like record format for compatibility."""
+    """将 CSV 行还原为类似 GitHub API 的记录格式以保持兼容。"""
     records = []
     for row in rows:
-        # Reconstruct owner object
+        # 重建 owner 对象
         owner_login = row.get("owner", "")
         owner = {"login": owner_login, "type": "User"} if owner_login else {}
 
-        # Reconstruct license object
+        # 重建 license 对象
         license_spdx = row.get("license", "")
         license_obj = {"spdx_id": license_spdx, "key": license_spdx.lower()} if license_spdx else None
 
-        # Reconstruct topics list
+        # 重建 topics 列表
         topics_str = row.get("topics", "")
         topics = [t.strip() for t in topics_str.split(",") if t.strip()] if topics_str else []
 
@@ -153,7 +153,7 @@ def csv_rows_to_records(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def save_repos_to_csv(records: list[dict[str, Any]], path: Path = RAW_REPOS_CSV) -> bool:
-    """Save repository records to CSV file."""
+    """保存仓库记录到 CSV 文件。"""
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
         rows = records_to_csv_rows(records)
@@ -176,7 +176,7 @@ def save_repos_to_csv(records: list[dict[str, Any]], path: Path = RAW_REPOS_CSV)
 
 
 def load_repos_from_csv(path: Path = RAW_REPOS_CSV) -> list[dict[str, Any]]:
-    """Load repository records from CSV file."""
+    """从 CSV 文件加载仓库记录。"""
     if not path.exists():
         write_log("info", "csv_not_found", f"{path.name} does not exist")
         return []
@@ -194,20 +194,20 @@ def load_repos_from_csv(path: Path = RAW_REPOS_CSV) -> list[dict[str, Any]]:
 
 
 def migrate_json_to_csv(json_records: list[dict[str, Any]], backup: bool = True) -> bool:
-    """Migrate existing JSON records to CSV format.
+    """将已有 JSON 记录迁移为 CSV 格式。
 
-    Args:
-        json_records: List of records loaded from JSON files
-        backup: Whether to create backup CSV before overwriting
+    参数：
+        json_records: 从 JSON 文件加载的记录列表
+        backup: 覆盖前是否创建 CSV 备份
 
-    Returns:
-        True if migration succeeded
+    返回：
+        迁移成功时返回 True
     """
     if not json_records:
         write_log("warning", "csv_migration_empty", "no JSON records provided")
         return False
 
-    # Create backup if requested and file exists
+    # 按需在覆盖前创建备份
     if backup and RAW_REPOS_CSV.exists():
         try:
             import shutil
@@ -216,7 +216,7 @@ def migrate_json_to_csv(json_records: list[dict[str, Any]], backup: bool = True)
         except OSError as exc:
             write_log("warning", "csv_backup_failed", type(exc).__name__)
 
-    # Save to CSV
+    # 保存为 CSV
     success = save_repos_to_csv(json_records, RAW_REPOS_CSV)
 
     if success:
@@ -226,10 +226,10 @@ def migrate_json_to_csv(json_records: list[dict[str, Any]], backup: bool = True)
 
 
 def verify_csv_integrity() -> dict[str, Any]:
-    """Verify CSV file integrity and return statistics.
+    """校验 CSV 文件完整性并返回统计信息。
 
-    Returns:
-        Dictionary with: exists, record_count, has_duplicates, missing_fields
+    返回：
+        包含 exists、record_count、has_duplicates、missing_fields 的字典
     """
     if not RAW_REPOS_CSV.exists():
         return {
@@ -242,10 +242,10 @@ def verify_csv_integrity() -> dict[str, Any]:
     try:
         df = pd.read_csv(RAW_REPOS_CSV, encoding="utf-8", keep_default_na=False)
 
-        # Check for duplicates
+        # 检查重复仓库
         has_duplicates = df["full_name"].duplicated().any()
 
-        # Check for missing required fields
+        # 检查必填字段缺失
         missing_fields = [field for field in ["id", "full_name", "name"] if field not in df.columns]
 
         return {

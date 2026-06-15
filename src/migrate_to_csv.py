@@ -1,14 +1,13 @@
-"""Migration script: legacy JSON files -> CSV format.
+"""迁移脚本：旧 JSON 文件 -> CSV 格式。
 
-Run this script to migrate optional legacy JSON repository files to the
-git-friendly local cache CSV.
+用于把可选的旧 JSON 仓库文件迁移为适合 git 管理的本地 CSV 缓存。
 
-Usage:
+用法：
     python -m src.migrate_to_csv [--verify-only] [--no-backup]
 
-Options:
-    --verify-only: Check CSV integrity without migrating
-    --no-backup: Skip creating backup before migration
+选项：
+    --verify-only: 只校验 CSV 完整性，不执行迁移
+    --no-backup: 迁移前不创建备份
 """
 from __future__ import annotations
 
@@ -16,7 +15,7 @@ import argparse
 import sys
 from pathlib import Path
 
-# Add src to path for standalone execution
+# 支持脚本独立执行时导入 src 内模块
 SRC_DIR = Path(__file__).resolve().parent
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
@@ -32,22 +31,22 @@ from data_store import load_raw_repo_records
 
 
 def print_status(message: str, level: str = "info") -> None:
-    """Print colored status message."""
+    """打印带颜色的状态信息。"""
     colors = {
-        "info": "\033[36m",  # Cyan
-        "success": "\033[32m",  # Green
-        "warning": "\033[33m",  # Yellow
-        "error": "\033[31m",  # Red
+        "info": "\033[36m",  # 青色
+        "success": "\033[32m",  # 绿色
+        "warning": "\033[33m",  # 黄色
+        "error": "\033[31m",  # 红色
     }
     reset = "\033[0m"
     color = colors.get(level, "")
-    # Use ASCII symbols for Windows compatibility
+    # 使用 ASCII 标记以兼容 Windows 控制台
     message = message.replace("✓", "[OK]").replace("✗", "[X]").replace("⚠", "[!]")
     print(f"{color}{message}{reset}", flush=True)
 
 
 def verify_only() -> int:
-    """Verify CSV integrity and print report."""
+    """校验 CSV 完整性并打印报告。"""
     print_status("\n=== CSV Integrity Check ===", "info")
 
     stats = verify_csv_integrity()
@@ -86,10 +85,10 @@ def verify_only() -> int:
 
 
 def run_migration(create_backup: bool = True) -> int:
-    """Run the JSON to CSV migration."""
+    """执行 JSON 到 CSV 的迁移。"""
     print_status("\n=== JSON to CSV Migration ===", "info")
 
-    # Load JSON records
+    # 加载 JSON 记录
     print_status("Loading legacy JSON records if available...", "info")
     json_records = load_raw_repo_records()
 
@@ -99,7 +98,7 @@ def run_migration(create_backup: bool = True) -> int:
 
     print_status(f"✓ Loaded {len(json_records)} JSON records", "success")
 
-    # Check if CSV already exists
+    # 检查 CSV 是否已存在
     if RAW_REPOS_CSV.exists():
         print_status(f"⚠ CSV file already exists: {RAW_REPOS_CSV}", "warning")
         existing = load_repos_from_csv()
@@ -108,7 +107,7 @@ def run_migration(create_backup: bool = True) -> int:
         if create_backup:
             print_status(f"  Creating backup: {BACKUP_REPOS_CSV}", "info")
 
-    # Run migration
+    # 执行迁移
     print_status("\nMigrating to CSV format...", "info")
     success = migrate_json_to_csv(json_records, backup=create_backup)
 
@@ -118,7 +117,7 @@ def run_migration(create_backup: bool = True) -> int:
 
     print_status(f"✓ Migration successful: {len(json_records)} records", "success")
 
-    # Verify result
+    # 校验迁移结果
     print_status("\nVerifying migrated data...", "info")
     csv_records = load_repos_from_csv()
 
@@ -131,7 +130,7 @@ def run_migration(create_backup: bool = True) -> int:
 
     print_status(f"✓ Verification passed: {len(csv_records)} records", "success")
 
-    # Sample comparison
+    # 抽样对比
     if csv_records and json_records:
         json_sample = json_records[0]
         csv_sample = csv_records[0]
@@ -151,7 +150,7 @@ def run_migration(create_backup: bool = True) -> int:
 
 
 def main() -> int:
-    """Main entry point."""
+    """主入口。"""
     parser = argparse.ArgumentParser(
         description="Migrate repository data from JSON files to CSV format"
     )
