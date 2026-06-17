@@ -81,9 +81,11 @@ def generate_historical_stars(
     if stars_per_day <= 0:
         stars_per_day = max(1.0, current_stars / days_total * 0.5)  # 估算一个合理的增长率
 
-    # 计算起始星标数（确保不为负）
+    # 计算起始星标数，避免所有仓库都从同一个接近 0 的低值开始。
     total_growth = stars_per_day * days_total
-    start_stars = max(100, int(current_stars - total_growth))
+    estimated_start = int(current_stars - total_growth)
+    star_based_floor = int(current_stars * 0.03)
+    start_stars = max(100, star_based_floor, estimated_start)
 
     for day_offset in range(days_total + 1):
         progress = day_offset / days_total  # 0.0 到 1.0

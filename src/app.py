@@ -74,9 +74,11 @@ def format_time(value: object) -> str:
 def render_sidebar_nav() -> None:
     """渲染显式导航标签，避免使用 Streamlit 默认文件名。"""
     with st.sidebar:
+        st.markdown('<div class="sidebar-nav-title">页面导航</div>', unsafe_allow_html=True)
         st.page_link("app.py", label="首页")
-        st.page_link("pages/2_📊_细分图表分析.py", label="细分图表分析")
-        st.page_link("pages/3_📋_原始数据.py", label="原始数据")
+        st.page_link("pages/2_char_analysis.py", label="细分图表分析")
+        st.page_link("pages/3_sourcedata.py", label="原始数据")
+        st.page_link("pages/4_about.py", label="项目说明")
         st.divider()
 
 
