@@ -13,7 +13,7 @@ src_path = Path(__file__).parent.parent
 sys.path.insert(0, str(src_path))
 
 try:
-    from app import apply_page_style, data_mode_label, render_sidebar_nav
+    from app import apply_page_style, data_mode_label, render_page_hero, render_sidebar_nav
     from data_store import read_manifest
     from database import load_repositories
 except ImportError:
@@ -34,6 +34,7 @@ def render_metric(label: str, value: str, note: str) -> str:
 def main() -> None:
     apply_page_style()
     render_sidebar_nav()
+    render_page_hero("项目说明 - AgentPulse")
 
     manifest = read_manifest()
     try:
@@ -57,10 +58,6 @@ def main() -> None:
     )
 
     html = f"""
-        <div class="hero">
-          <h1>项目说明 - AgentPulse</h1>
-        </div>
-
         <div class="about-page">
           <section class="about-intro">
             <h2>这个项目做什么</h2>

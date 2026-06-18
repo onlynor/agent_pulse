@@ -16,7 +16,7 @@ sys.path.insert(0, str(src_path))
 
 try:
     from database import load_repositories
-    from app import apply_page_style, render_sidebar_nav
+    from app import apply_page_style, render_page_hero, render_sidebar_nav
 except ImportError:
     st.error("无法加载模块，请确保在正确的目录运行应用。")
     st.stop()
@@ -26,10 +26,7 @@ def main():
     apply_page_style()
     render_sidebar_nav()
 
-    st.markdown(
-        '<div class="hero"><h1>📋 原始数据与 GitHub 链接</h1></div>',
-        unsafe_allow_html=True,
-    )
+    render_page_hero("原始数据与 GitHub 链接")
 
     try:
         df = load_repositories()
@@ -121,11 +118,7 @@ def main():
             if repo.get("topics"):
                 topics = repo["topics"]
                 if isinstance(topics, str):
-                    import json
-                    try:
-                        topics = json.loads(topics)
-                    except:
-                        topics = []
+                    topics = [topic.strip() for topic in topics.split(",") if topic.strip()]
                 if topics:
                     topics_html = " ".join([
                         f'<span style="background: rgba(59, 130, 246, 0.2); color: #38bdf8; '

@@ -1,325 +1,283 @@
-"""AgentPulse 仪表盘的动态可视化组件。
-
-提供主界面所需的动画图表和动态效果。
-"""
+"""AgentPulse 仪表盘的动态可视化组件。"""
 from __future__ import annotations
 
 import pandas as pd
 import plotly.graph_objects as go
-from datetime import datetime, timedelta
-import streamlit as st
 
 try:
-    from .charts import CYAN, BLUE, VIOLET, GREEN, AMBER, TEXT, MUTED, PANEL_BG, GRID, CHART_TEMPLATE
+    from .charts import CHART_TEMPLATE, CYAN, GRID, MUTED, PANEL_BG, TEXT
 except ImportError:
-    from charts import CYAN, BLUE, VIOLET, GREEN, AMBER, TEXT, MUTED, PANEL_BG, GRID, CHART_TEMPLATE
+    from charts import CHART_TEMPLATE, CYAN, GRID, MUTED, PANEL_BG, TEXT
 
 
-@st.cache_data(ttl=3600)  # 缓存 1 小时
-def _generate_animation_data(df_hash: str, top_n: int = 6) -> dict:
-    """生成动画数据并缓存，避免重复计算.
+BAR_COLORS = [
+    "#22d3ee",
+    "#2ec4e6",
+    "#3ab5de",
+    "#46a6d6",
+    "#5297ce",
+    "#5e88c6",
+    "#6a79be",
+    "#766ab6",
+    "#6a6bae",
+    "#5e5ca6",
+    "#824ca6",
+    "#963d9e",
+    "#aa2e96",
+    "#be1f8e",
+    "#ca017e",
+]
 
-    参数：
-        df_hash: DataFrame 的哈希值（用于缓存键）
-        top_n: 显示的仓库数量
 
-    返回：
-        包含动画数据的字典
-    """
-    # 这个函数会在首次调用时执行，后续从缓存读取
-    return {"cached": True, "timestamp": datetime.now().isoformat()}
+def select_trending_repos(df: pd.DataFrame, top_n: int = 15) -> pd.DataFrame:
+    """选择星标数最高的仓库，并按升序返回以便从左到右升高。"""
+    if df.empty or "stargazers_count" not in df.columns:
+        return pd.DataFrame()
 
-
-def select_trending_repos(df: pd.DataFrame, top_n: int = 6) -> pd.DataFrame:
-    """选择星标增长较明显的仓库。
-
-    参数：
-        df: 仓库数据 DataFrame
-        top_n: 选择的仓库数量
-
-    返回：
-        按 stars_per_day 排序后的高增长仓库 DataFrame
-    """
-    if df.empty or "stars_per_day" not in df.columns:
-        return df.head(top_n)
-
-    # 确保 stars_per_day 是数值类型
     df_clean = df.copy()
-    df_clean["stars_per_day"] = pd.to_numeric(df_clean["stars_per_day"], errors="coerce").fillna(0)
-
-    # 筛选有显著增长的仓库（stars_per_day > 1）
-    trending = df_clean[df_clean["stars_per_day"] > 1].copy()
-
-    if trending.empty:
-        # 如果没有满足条件的，选择 stars_per_day 最高的
-        trending = df_clean.nlargest(top_n, "stars_per_day")
-    else:
-        trending = trending.nlargest(top_n, "stars_per_day")
-
-    return trending
-
-
-def generate_historical_stars(
-    current_stars: int,
-    stars_per_day: float,
-    months: int = 12
-) -> list[int]:
-    """生成模拟历史星标数据。
-
-    参数：
-        current_stars: 当前星标数
-        stars_per_day: 每日星标增长率
-        months: 模拟月份数
-
-    返回：
-        从旧到新的星标数量列表
-    """
-    history = []
-    days_total = months * 30  # 每月按 30 天计算
-
-    # 确保 stars_per_day 是正数
-    if stars_per_day <= 0:
-        stars_per_day = max(1.0, current_stars / days_total * 0.5)  # 估算一个合理的增长率
-
-    # 计算起始星标数，避免所有仓库都从同一个接近 0 的低值开始。
-    total_growth = stars_per_day * days_total
-    estimated_start = int(current_stars - total_growth)
-    star_based_floor = int(current_stars * 0.03)
-    start_stars = max(100, star_based_floor, estimated_start)
-
-    for day_offset in range(days_total + 1):
-        progress = day_offset / days_total  # 0.0 到 1.0
-
-        # 用 smoothstep 让趋势自然增长，避免逐日随机抖动造成锯齿折线。
-        smooth_progress = progress * progress * (3 - 2 * progress)
-        base_stars = start_stars + (current_stars - start_stars) * smooth_progress
-
-        historical_stars = max(100, int(base_stars))
-        history.append(historical_stars)
-
-    return history
-
-
-def create_animated_star_trend(df: pd.DataFrame, top_n: int = 6) -> go.Figure:
-    """创建展示星标增长趋势的动画折线图。
-
-    参数：
-        df: 仓库数据 DataFrame
-        top_n: 展示的仓库数量
-
-    返回：
-        带动画帧的 Plotly Figure
-    """
-    if df.empty:
-        fig = go.Figure()
-        fig.add_annotation(
-            text="暂无数据",
-            x=0.5, y=0.5,
-            xref="paper", yref="paper",
-            showarrow=False,
-            font=dict(color=MUTED, size=16),
-        )
-        fig.update_layout(
-            template=CHART_TEMPLATE,
-            height=450,
-            margin=dict(l=50, r=20, t=10, b=40),
-            paper_bgcolor=PANEL_BG,
-            plot_bgcolor="rgba(2, 6, 23, 0)",
-        )
-        return fig
-
-    # 选择趋势显著的仓库
-    trending = select_trending_repos(df, top_n)
-
-    if trending.empty:
-        return create_animated_star_trend(df.head(top_n), top_n)
-
-    # 配色方案
-    colors = [CYAN, BLUE, VIOLET, GREEN, AMBER, "#EC4899"]
-
-    # 生成 12 个月的历史数据（360 天）
-    months = 12
-    days_total = months * 30  # 360 天
-
-    # 生成日期标签（按月显示）
-    dates = []
-    date_labels = []
-    for i in range(days_total + 1):
-        date_obj = datetime.now() - timedelta(days=days_total - i)
-        dates.append(date_obj.strftime("%Y-%m-%d"))
-        # 每月 1 号或每 30 天显示一次标签
-        if i % 30 == 0:
-            date_labels.append(date_obj.strftime("%Y-%m"))
-        else:
-            date_labels.append("")
-
-    # 准备数据
-    traces_data = []
-    for idx, (_, repo) in enumerate(trending.iterrows()):
-        full_name = repo["full_name"]
-        current_stars = int(repo["stargazers_count"])
-        stars_per_day = float(repo.get("stars_per_day", 0))
-
-        # 确保 stars_per_day 是有效值
-        if stars_per_day <= 0 or pd.isna(stars_per_day):
-            # 估算一个合理的增长率（假设 12 个月增长 20%）
-            stars_per_day = current_stars * 0.2 / days_total
-
-        # 生成历史数据（12 个月）
-        star_history = generate_historical_stars(current_stars, stars_per_day, months)
-
-        # 验证数据质量
-        if len(star_history) != len(dates):
-            continue  # 跳过数据异常的仓库
-
-        # 确保数据是递增的
-        star_history = sorted(star_history)
-
-        traces_data.append({
-            "name": full_name,
-            "x": dates,
-            "y": star_history,
-            "color": colors[idx % len(colors)],
-            "current_stars": current_stars,
-            "growth": int(stars_per_day * days_total),  # 12 个月增长量
-        })
-
-    # 创建动画帧
-    frames = []
-    for frame_idx in range(len(dates)):
-        frame_traces = []
-        for trace_data in traces_data:
-            # 构建 GitHub 链接
-            github_url = f"https://github.com/{trace_data['name']}"
-
-            frame_traces.append(go.Scatter(
-                x=trace_data["x"][:frame_idx + 1],
-                y=trace_data["y"][:frame_idx + 1],
-                mode="lines+markers",
-                name=trace_data["name"],
-                line=dict(color=trace_data["color"], width=3),
-                marker=dict(size=3, color=trace_data["color"], opacity=0.45),
-                hovertemplate=(
-                    f"<b>{trace_data['name']}</b><br>"
-                    f"🔗 <a href='{github_url}' target='_blank' style='color:#38bdf8'>GitHub 链接</a><br>"
-                    f"日期: %{{x}}<br>"
-                    f"星标数: %{{y:,}}<br>"
-                    f"<extra></extra>"
-                ),
-            ))
-
-        frames.append(go.Frame(
-            data=frame_traces,
-            name=str(frame_idx),
-        ))
-
-    # 创建初始图表
-    fig = go.Figure(
-        data=frames[0].data,
-        frames=frames,
+    df_clean["stargazers_count"] = (
+        pd.to_numeric(df_clean["stargazers_count"], errors="coerce")
+        .fillna(0)
+        .astype(int)
     )
 
-    # 添加播放/暂停按钮（纯图标，无文字）
+    top = df_clean.nlargest(top_n, "stargazers_count").copy()
+    top["rank"] = range(1, len(top) + 1)
+    return top.sort_values("stargazers_count", ascending=True)
+
+
+def _empty_bar_figure(message: str) -> go.Figure:
+    fig = go.Figure()
+    fig.add_annotation(
+        text=message,
+        x=0.5,
+        y=0.5,
+        xref="paper",
+        yref="paper",
+        showarrow=False,
+        font=dict(color=MUTED, size=16),
+    )
     fig.update_layout(
         template=CHART_TEMPLATE,
-        height=550,  # 进一步增加高度到 550px
-        margin=dict(l=70, r=40, t=30, b=60),
+        height=450,
+        margin=dict(l=18, r=18, t=10, b=22),
+        paper_bgcolor=PANEL_BG,
+        plot_bgcolor="rgba(2, 6, 23, 0)",
+    )
+    fig.update_xaxes(visible=False)
+    fig.update_yaxes(visible=False)
+    return fig
+
+
+def _bar_trace(
+    chart_df: pd.DataFrame,
+    colors: list[str],
+    values: list[int],
+    active_idx: int | None = None,
+) -> go.Bar:
+    line_colors = []
+    line_widths = []
+    for idx in range(len(chart_df)):
+        line_colors.append("rgba(255,255,255,0.55)" if idx == active_idx else "rgba(255,255,255,0.08)")
+        line_widths.append(2.5 if idx == active_idx else 0.5)
+
+    return go.Bar(
+        x=chart_df["axis_label"].tolist(),
+        y=values,
+        customdata=[
+            [
+                str(row["full_name"]),
+                int(row["stargazers_count"]),
+                int(row["rank"]),
+                str(row["html_url"]),
+            ]
+            for _, row in chart_df.iterrows()
+        ],
+        text=[f"{value:,}" if value > 0 else "" for value in values],
+        textposition="outside",
+        cliponaxis=False,
+        marker=dict(
+            color=colors,
+            line=dict(color=line_colors, width=line_widths),
+        ),
+        showlegend=False,
+        hovertemplate=(
+            "<b>%{customdata[0]}</b><br>"
+            "排名: Top %{customdata[2]}<br>"
+            "⭐ 星标: %{customdata[1]:,}<br>"
+            "<a href='%{customdata[3]}' target='_blank'>打开 GitHub</a><br>"
+            "<extra></extra>"
+        ),
+    )
+
+
+def create_animated_star_trend(df: pd.DataFrame, top_n: int = 15) -> go.Figure:
+    """创建 Top N 仓库真实星标数的竖向柱状动画图。"""
+    if df.empty:
+        return _empty_bar_figure("暂无数据")
+    if "full_name" not in df.columns or "stargazers_count" not in df.columns:
+        return _empty_bar_figure("暂无足够数据")
+
+    chart_df = select_trending_repos(df, top_n).copy()
+    if chart_df.empty:
+        return _empty_bar_figure("暂无足够数据")
+
+    chart_df["short_name"] = chart_df["full_name"].astype(str).str.split("/").str[-1]
+    chart_df["axis_label"] = chart_df["short_name"]
+    chart_df["html_url"] = chart_df["full_name"].map(lambda name: f"https://github.com/{name}")
+    colors = BAR_COLORS[: len(chart_df)]
+    target_values = chart_df["stargazers_count"].astype(int).tolist()
+    x_labels = chart_df["axis_label"].tolist()
+
+    frames = []
+    slider_steps = []
+    growth_steps = 8
+    for active_idx, target in enumerate(target_values):
+        for step in range(1, growth_steps + 1):
+            progress = step / growth_steps
+            eased = progress * progress * (3 - 2 * progress)
+            values = (
+                target_values[:active_idx]
+                + [int(target * eased)]
+                + [0] * (len(target_values) - active_idx - 1)
+            )
+            frame_name = f"{active_idx + 1}-{step}"
+            frames.append(
+                go.Frame(
+                    data=[_bar_trace(chart_df, colors, values, active_idx)],
+                    name=frame_name,
+                )
+            )
+        slider_steps.append(
+            {
+                "args": [
+                    [frames[-1].name],
+                    {
+                        "frame": {"duration": 0, "redraw": True},
+                        "mode": "immediate",
+                    },
+                ],
+                "label": f"Top {int(chart_df.iloc[active_idx]['rank'])}",
+                "method": "animate",
+            }
+        )
+
+    frame_names = [frame.name for frame in frames]
+    fig = go.Figure(data=[_bar_trace(chart_df, colors, target_values)], frames=frames)
+
+    fig.update_layout(
+        template=CHART_TEMPLATE,
+        height=540,
+        margin=dict(l=45, r=30, t=20, b=95),
+        font=dict(family="Microsoft YaHei, Arial, sans-serif", size=13, color=TEXT),
         paper_bgcolor=PANEL_BG,
         plot_bgcolor="rgba(2, 6, 23, 0)",
         xaxis=dict(
-            title="月份",
+            title="",
             gridcolor=GRID,
+            zerolinecolor=GRID,
             color=MUTED,
-            tickangle=-45,
-            showticklabels=True,
-            tickmode='array',
-            tickvals=[dates[i] for i in range(0, len(dates), 30)],  # 每 30 天一个刻度
-            ticktext=[date_obj.strftime("%Y-%m") for date_obj in [datetime.now() - timedelta(days=days_total - i) for i in range(0, days_total + 1, 30)]],
+            categoryorder="array",
+            categoryarray=x_labels,
+            tickangle=-30,
+            tickfont=dict(size=11),
         ),
         yaxis=dict(
-            title="星标数",
+            title="",
             gridcolor=GRID,
+            zerolinecolor=GRID,
             color=MUTED,
-            tickformat=",",  # 千位分隔符
-            dtick=10000,  # 每 10k 一个刻度
-            rangemode='tozero',  # 从 0 开始
+            tickformat=",",
+            tickfont=dict(size=11),
+            rangemode="tozero",
+            range=[0, max(target_values) * 1.12],
         ),
-        legend=dict(
-            font=dict(color=TEXT, size=11),
-            bgcolor="rgba(0,0,0,0.5)",
-            orientation="v",
-            yanchor="top",
-            y=0.99,
-            xanchor="right",
-            x=0.99,
+        hovermode="closest",
+        hoverlabel=dict(
+            bgcolor="rgba(8, 18, 45, 0.95)",
+            bordercolor=CYAN,
+            font=dict(color=TEXT, size=12),
         ),
-        updatemenus=[{
-            "type": "buttons",
-            "showactive": False,
-            "buttons": [
-                {
-                    "label": "▶",  # 纯播放图标，无文字
-                    "method": "animate",
-                    "args": [None, {
-                        "frame": {"duration": 30, "redraw": True},  # 加快到 30ms/帧
-                        "fromcurrent": True,
-                        "mode": "immediate",
-                        "transition": {"duration": 15},
-                    }],
-                },
-                {
-                    "label": "⏸",  # 纯暂停图标，无文字
-                    "method": "animate",
-                    "args": [[None], {
-                        "frame": {"duration": 0, "redraw": False},
-                        "mode": "immediate",
-                        "transition": {"duration": 0},
-                    }],
-                },
-            ],
-            "direction": "left",
-            "pad": {"r": 10, "t": 5},
-            "x": 0.01,
-            "y": 1.02,
-            "xanchor": "left",
-            "yanchor": "bottom",
-            "bgcolor": "rgba(3, 18, 29, 0.9)",
-            "bordercolor": CYAN,
-            "borderwidth": 2,
-            "font": dict(color=TEXT, size=16),  # 图标更大
-        }],
-        sliders=[{
-            "active": 0,
-            "steps": [
-                {
-                    "args": [[f.name], {
-                        "frame": {"duration": 0, "redraw": True},
-                        "mode": "immediate",
-                    }],
-                    "label": date_labels[k],  # 使用月份标签
-                    "method": "animate",
-                }
-                for k, f in enumerate(frames)
-            ],
-            "x": 0.02,
-            "y": -0.05,
-            "len": 0.96,
-            "xanchor": "left",
-            "yanchor": "top",
-            "pad": {"b": 15, "t": 15},
-            "currentvalue": {
-                "visible": True,
-                "prefix": "📅 ",
+        bargap=0.28,
+        sliders=[
+            {
+                "active": len(frames) - 1,
+                "steps": slider_steps,
+                "x": 0.02,
+                "y": -0.08,
+                "len": 0.96,
                 "xanchor": "left",
-                "font": {"size": 14, "color": TEXT},
-            },
-            "transition": {"duration": 25},
-            "bgcolor": "rgba(15, 23, 42, 0.7)",
-            "bordercolor": CYAN,
-            "borderwidth": 1.5,
-            "tickcolor": CYAN,
-            "font": {"color": MUTED, "size": 9},
-        }],
+                "yanchor": "top",
+                "pad": {"b": 15, "t": 15},
+                "currentvalue": {
+                    "visible": True,
+                    "prefix": "  ",
+                    "xanchor": "left",
+                    "font": {"size": 13, "color": TEXT},
+                },
+                "transition": {"duration": 0},
+                "bgcolor": "rgba(15, 23, 42, 0.7)",
+                "bordercolor": CYAN,
+                "borderwidth": 1.5,
+                "tickcolor": CYAN,
+                "font": {"color": MUTED, "size": 9},
+            }
+        ],
+        updatemenus=[
+            {
+                "type": "buttons",
+                "showactive": False,
+                "buttons": [
+                    {
+                        "label": "▶",
+                        "method": "animate",
+                        "args": [
+                            frame_names,
+                            {
+                                "frame": {"duration": 70, "redraw": True},
+                                "fromcurrent": False,
+                                "mode": "immediate",
+                                "transition": {"duration": 45},
+                            },
+                        ],
+                    },
+                    {
+                        "label": "■",
+                        "method": "animate",
+                        "args": [
+                            [None],
+                            {
+                                "frame": {"duration": 0, "redraw": False},
+                                "mode": "immediate",
+                                "transition": {"duration": 0},
+                            },
+                        ],
+                    },
+                ],
+                "direction": "left",
+                "pad": {"r": 10, "t": 5},
+                "x": 0.01,
+                "y": 1.02,
+                "xanchor": "left",
+                "yanchor": "bottom",
+                "bgcolor": "rgba(3, 18, 29, 0.9)",
+                "bordercolor": CYAN,
+                "borderwidth": 2,
+                "font": dict(color=TEXT, size=16),
+            }
+        ],
+    )
+
+    fig.add_annotation(
+        text=f"已采集项目 {len(chart_df)} 个 · 仅按 GitHub 星标数排序 · 悬停可打开项目链接",
+        xref="paper",
+        yref="paper",
+        x=1.0,
+        y=0.0,
+        xanchor="right",
+        yanchor="bottom",
+        showarrow=False,
+        font=dict(color=MUTED, size=9),
     )
 
     return fig

@@ -14,7 +14,13 @@ sys.path.insert(0, str(src_path))
 
 try:
     from database import load_repositories
-    from app import apply_page_style, filter_repositories, make_display_table, render_sidebar_nav
+    from app import (
+        apply_page_style,
+        filter_repositories,
+        make_display_table,
+        render_page_hero,
+        render_sidebar_nav,
+    )
     from charts import (
         language_distribution,
         category_distribution,
@@ -31,10 +37,7 @@ def main():
     apply_page_style()
     render_sidebar_nav()
 
-    st.markdown(
-        '<div class="hero"><h1>📊 细分图表分析</h1></div>',
-        unsafe_allow_html=True,
-    )
+    render_page_hero("细分图表分析")
 
     try:
         df = load_repositories()

@@ -64,6 +64,19 @@ def apply_page_style() -> None:
     st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
 
 
+def render_page_hero(title: str, *, show_repo_link: bool = False) -> None:
+    repo_link = ""
+    if show_repo_link:
+        repo_link = (
+            '<a class="repo-link" href="https://github.com/onlynor/agent_pulse" target="_blank" '
+            'rel="noopener noreferrer" aria-label="GitHub 仓库" title="GitHub 仓库">'
+            '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">'
+            '<path d="M12 0.5C5.65 0.5 0.5 5.65 0.5 12c0 5.08 3.29 9.39 7.86 10.91 0.58 0.1 0.79-0.25 0.79-0.56 0-0.28-0.01-1.02-0.02-2-3.2 0.7-3.88-1.54-3.88-1.54-0.52-1.33-1.28-1.68-1.28-1.68-1.05-0.72 0.08-0.7 0.08-0.7 1.16 0.08 1.77 1.19 1.77 1.19 1.03 1.76 2.7 1.25 3.36 0.96 0.1-0.75 0.4-1.25 0.73-1.54-2.55-0.29-5.23-1.28-5.23-5.68 0-1.25 0.45-2.28 1.18-3.08-0.12-0.29-0.51-1.46 0.11-3.04 0 0 0.97-0.31 3.16 1.18 0.92-0.26 1.9-0.38 2.88-0.39 0.98 0 1.96 0.13 2.88 0.39 2.2-1.49 3.16-1.18 3.16-1.18 0.62 1.58 0.23 2.75 0.11 3.04 0.74 0.8 1.18 1.83 1.18 3.08 0 4.42-2.69 5.39-5.25 5.67 0.41 0.36 0.78 1.06 0.78 2.14 0 1.54-0.01 2.79-0.01 3.17 0 0.31 0.21 0.67 0.79 0.56A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35 0.5 12 0.5Z"/>'
+            "</svg></a>"
+        )
+    st.markdown(f'<div class="hero"><h1>{title}</h1>{repo_link}</div>', unsafe_allow_html=True)
+
+
 def format_time(value: object) -> str:
     if value is None:
         return ""
@@ -211,19 +224,7 @@ def main() -> None:
     update_data_source = deps["update_data_source"]
     write_log = deps["write_log"]
 
-    st.markdown(
-        """
-        <div class="hero">
-          <h1>首页 - AgentPulse 智能体开源生态大屏</h1>
-          <a class="repo-link" href="https://github.com/onlynor/agent_pulse" target="_blank" rel="noopener noreferrer" aria-label="GitHub 仓库" title="GitHub 仓库">
-            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <path d="M12 0.5C5.65 0.5 0.5 5.65 0.5 12c0 5.08 3.29 9.39 7.86 10.91 0.58 0.1 0.79-0.25 0.79-0.56 0-0.28-0.01-1.02-0.02-2-3.2 0.7-3.88-1.54-3.88-1.54-0.52-1.33-1.28-1.68-1.28-1.68-1.05-0.72 0.08-0.7 0.08-0.7 1.16 0.08 1.77 1.19 1.77 1.19 1.03 1.76 2.7 1.25 3.36 0.96 0.1-0.75 0.4-1.25 0.73-1.54-2.55-0.29-5.23-1.28-5.23-5.68 0-1.25 0.45-2.28 1.18-3.08-0.12-0.29-0.51-1.46 0.11-3.04 0 0 0.97-0.31 3.16 1.18 0.92-0.26 1.9-0.38 2.88-0.39 0.98 0 1.96 0.13 2.88 0.39 2.2-1.49 3.16-1.18 3.16-1.18 0.62 1.58 0.23 2.75 0.11 3.04 0.74 0.8 1.18 1.83 1.18 3.08 0 4.42-2.69 5.39-5.25 5.67 0.41 0.36 0.78 1.06 0.78 2.14 0 1.54-0.01 2.79-0.01 3.17 0 0.31 0.21 0.67 0.79 0.56A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35 0.5 12 0.5Z"/>
-            </svg>
-          </a>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    render_page_hero("首页 - AgentPulse 智能体开源生态大屏", show_repo_link=True)
 
     manifest = read_manifest()
     source_options = ["本地缓存数据", "在线开源生态数据", "示例数据集"]
@@ -260,11 +261,9 @@ def main() -> None:
     categories: list[str] = []
     keyword = ""
     top_n = 10
-    sort_label = "生态评分"
 
     if not df.empty:
         with st.sidebar:
-            st.divider()
             st.header("筛选视图")
             language_options = sorted(df["language"].fillna("未知").unique().tolist())
             category_options = sorted(df["category"].fillna("Other").unique().tolist())
@@ -275,11 +274,6 @@ def main() -> None:
             st.header("排序与展示")
             max_top_n = max(1, min(20, len(df)))
             top_n = st.slider("展示数量", min_value=1, max_value=max_top_n, value=min(10, max_top_n))
-            sort_label = st.selectbox(
-                "表格排序",
-                ["生态评分", "健康评分", "增长评分", "维护压力", "星标数", "更新时间"],
-                index=0,
-            )
 
     filtered_df = filter_repositories(df, languages, categories, keyword)
     summary = repository_summary(filtered_df)
@@ -297,26 +291,10 @@ def main() -> None:
     # 添加间距
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # 添加动态星标趋势图
-    st.markdown("#### 📈 星标增长趋势动画 (Top 6 高增长仓库)")
+    # 添加动态星标排行图
+    st.markdown("#### ⭐ 已采集项目星标数排名 (Top 15)")
 
-    # 显示仓库链接
-    if not filtered_df.empty:
-        from dynamic_viz import select_trending_repos
-        trending = select_trending_repos(filtered_df, top_n=6)
-        if not trending.empty:
-            links_html = '<div style="margin-bottom: 12px; font-size: 0.9rem; color: #93C5FD;">'
-            for idx, (_, repo) in enumerate(trending.iterrows()):
-                full_name = repo["full_name"]
-                github_url = f"https://github.com/{full_name}"
-                stars = int(repo["stargazers_count"])
-                links_html += f'<a href="{github_url}" target="_blank" style="color: #38bdf8; text-decoration: none; margin-right: 20px;">🔗 {full_name}</a> <span style="color: #64748B;">({stars:,} ⭐)</span>  '
-                if (idx + 1) % 3 == 0:  # 每 3 个换行
-                    links_html += '<br>'
-            links_html += '</div>'
-            st.markdown(links_html, unsafe_allow_html=True)
-
-    st.plotly_chart(create_animated_star_trend(filtered_df, top_n=6), use_container_width=True)
+    st.plotly_chart(create_animated_star_trend(filtered_df, top_n=15), use_container_width=True)
 
     # 添加间距
     st.markdown("<br>", unsafe_allow_html=True)

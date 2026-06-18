@@ -19,6 +19,7 @@ data/derived/
 data/snapshots/
 data/legacy/
 tests/
+scripts/
 
 # 本地文档和迭代记录
 *.doc

@@ -11,6 +11,11 @@
     "agentic-ai",
     "autonomous-agents"
   ],
+  "pinned_repositories": [
+    "openclaw/openclaw",
+    "NousResearch/hermes-agent",
+    "anomalyco/opencode"
+  ],
   "languages": [],
   "min_stars": 1000,
   "pushed_after": "",

@@ -53,6 +53,9 @@ DEFAULT_REPOSITORIES = [
     "e2b-dev/awesome-ai-agents",
     "openai/swarm",
     "agno-agi/agno",
+    "openclaw/openclaw",
+    "NousResearch/hermes-agent",
+    "anomalyco/opencode",
 ]
 
 
@@ -119,17 +122,44 @@ def refresh_online_ecosystem() -> dict[str, Any]:
     try:
         config = load_online_source_config()
         client = GitHubClient()
+        pinned_repos = [
+            str(repo).strip()
+            for repo in config.get("pinned_repositories", [])
+            if str(repo).strip()
+        ]
+        pinned_records: list[dict[str, Any]] = []
+        pinned_errors: list[str] = []
+
+        for repo in pinned_repos:
+            repo_result = client.get_repo(repo)
+            if repo_result.ok and repo_result.data:
+                pinned_records.append(repo_result.data)
+            else:
+                pinned_errors.append(f"{repo}: {repo_result.error}")
+                write_log("warning", "pinned_repo_collect_failed", f"{repo}: {repo_result.error}")
+
         result = client.search_repositories(
             keywords=config.get("keywords") or [],
             topics=config.get("topics") or [],
             languages=config.get("languages") or [],
             min_stars=int(config.get("min_stars") or 0),
             pushed_after=str(config.get("pushed_after") or ""),
-            max_repos=int(config.get("max_repos") or 300),
+            max_repos=max(1, int(config.get("max_repos") or 300) - len(pinned_records)),
             sort=str(config.get("sort") or "stars"),
             order=str(config.get("order") or "desc"),
         )
         if not result.ok or not result.data:
+            if pinned_records:
+                df = save_dataset(pinned_records, active_source="在线开源生态数据", data_mode="online")
+                save_repositories(df)
+                return {
+                    "ok": True,
+                    "message": "",
+                    "updated_count": len(df),
+                    "data_mode": "online",
+                    "errors": [*pinned_errors, result.error],
+                }
+
             cached_df = load_cache_dataframe()
             if not cached_df.empty:
                 save_repositories(cached_df)
@@ -138,11 +168,17 @@ def refresh_online_ecosystem() -> dict[str, Any]:
                     "message": ONLINE_FALLBACK_MESSAGE,
                     "updated_count": len(cached_df),
                     "data_mode": "cache",
-                    "errors": [result.error],
+                    "errors": [*pinned_errors, result.error],
                 }
-            return {"ok": False, "message": GENERIC_ERROR_MESSAGE, "errors": [result.error]}
+            return {"ok": False, "message": GENERIC_ERROR_MESSAGE, "errors": [*pinned_errors, result.error]}
 
-        records = result.data.get("items", [])
+        seen = set()
+        records = []
+        for record in [*pinned_records, *result.data.get("items", [])]:
+            full_name = str(record.get("full_name", "")).strip()
+            if full_name and full_name not in seen:
+                seen.add(full_name)
+                records.append(record)
         if not records:
             return {"ok": False, "message": GENERIC_ERROR_MESSAGE, "errors": []}
 
@@ -153,7 +189,7 @@ def refresh_online_ecosystem() -> dict[str, Any]:
             "message": "",
             "updated_count": len(df),
             "data_mode": "online",
-            "errors": [],
+            "errors": pinned_errors,
         }
     except Exception as exc:
         write_log("error", "refresh_online_ecosystem_failed", type(exc).__name__)
