@@ -58,6 +58,30 @@ http://localhost:8501
 
 在线生态数据会优先补齐配置中的重点仓库，例如 OpenClaw、Hermes Agent、opencode 等，避免热门项目因搜索结果波动缺失。
 
+## 项目结构图
+
+**图 1 AgentPulse Git 仓库项目结构**
+
+```text
+agent_pulse/
+├── data/                  # 本地数据与缓存配置
+│   ├── cache/             # CSV 仓库缓存
+│   └── sources/           # 在线与示例数据源配置
+├── src/                   # 系统核心代码
+│   ├── app.py             # Streamlit 首页入口
+│   ├── pages/             # 细分图表、原始数据、项目说明页面
+│   ├── collect_data.py    # GitHub 数据采集
+│   ├── data_store.py      # 数据集读写与派生文件生成
+│   ├── database.py        # SQLite 数据访问
+│   ├── transform.py       # 数据清洗、标准化与字段整理
+│   ├── scoring.py         # 指标评分计算
+│   └── charts.py          # Plotly 可视化图表生成
+├── .streamlit/            # Streamlit 运行配置
+├── requirements.txt       # Python 依赖列表
+├── Dockerfile             # 容器化部署配置
+└── README.md              # 项目说明文档
+```
+
 ## 页面
 
 - 首页：生态总览、Top 15 星标排行动画、项目矩阵和生态洞察
